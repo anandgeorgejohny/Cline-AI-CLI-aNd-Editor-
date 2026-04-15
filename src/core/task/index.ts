@@ -2836,6 +2836,10 @@ export class Task {
 			Session.get().startApiCall()
 			let streamCoordinator: StreamChunkCoordinator | undefined
 
+			// Enable streaming buffer to skip disk writes during streaming
+			// This dramatically reduces I/O by buffering message updates in memory
+			await this.messageStateHandler.startStreamingBuffer()
+
 			try {
 				streamCoordinator = new StreamChunkCoordinator(stream, {
 					onUsageChunk: (chunk) => {
@@ -3062,6 +3066,8 @@ export class Task {
 				}
 			} finally {
 				this.taskState.isStreaming = false
+				// Disable streaming buffer and flush all pending writes to disk
+				await this.messageStateHandler.endStreamingBuffer()
 				// End API call tracking for session statistics
 				Session.get().endApiCall()
 			}
