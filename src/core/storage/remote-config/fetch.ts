@@ -89,6 +89,39 @@ async function makeAuthenticatedRequest<T>(endpoint: string, organizationId: str
 	return data
 }
 
+export async function fetchUserRemoteConfig(): Promise<RemoteConfig | undefined> {
+	try {
+		const accountService = ClineAccountService.getInstance()
+		const configData = await accountService.fetchUserRemoteConfig()
+
+		if (!configData) {
+			return undefined
+		}
+
+		const parsedConfig = JSON.parse(configData.value)
+		const validatedConfig = RemoteConfigSchema.parse(parsedConfig)
+
+		writeRemoteConfigToCache(undefined, parsedConfig)
+
+		return validatedConfig
+	} catch (error) {
+		Logger.error(`Failed to fetch remote config`, error)
+
+		const cachedConfig = await readRemoteConfigFromCache()
+		if (cachedConfig) {
+			try {
+				// Validate cached config against schema
+				const validatedCachedConfig = RemoteConfigSchema.parse(cachedConfig)
+				return validatedCachedConfig
+			} catch (validationError) {
+				Logger.error(`Cached config validation failed`, validationError)
+			}
+		}
+
+		return undefined
+	}
+}
+
 /**
  * Fetches remote configuration for a specific organization from the API.
  * Falls back to cached config if the request fails.
@@ -157,9 +190,7 @@ async function fetchApiKeysForOrganization(organizationId: string): Promise<APIK
 	}
 }
 
-async function discoverRemoteConfigOrg(): Promise<
-	{ organizationId: string; discoveredValue?: string } | undefined
-> {
+async function discoverRemoteConfigOrg(): Promise<{ organizationId: string; discoveredValue?: string } | undefined> {
 	const accountService = ClineAccountService.getInstance()
 
 	const discovery = await accountService.fetchUserRemoteConfig()
@@ -194,10 +225,7 @@ function parseDiscoveredConfig(value: string, organizationId: string): RemoteCon
 	}
 }
 
-async function resolveRemoteConfig(
-	organizationId: string,
-	discoveredValue?: string,
-): Promise<RemoteConfig | undefined> {
+async function resolveRemoteConfig(organizationId: string, discoveredValue?: string): Promise<RemoteConfig | undefined> {
 	if (discoveredValue) {
 		const config = parseDiscoveredConfig(discoveredValue, organizationId)
 		if (config) {
