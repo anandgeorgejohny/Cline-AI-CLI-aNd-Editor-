@@ -120,7 +120,7 @@ export class ToolExecutor {
 		private getActiveHookExecution: () => Promise<typeof taskState.activeHookExecution>,
 		private runUserPromptSubmitHook: (
 			userContent: ClineContent[],
-			context: "initial_task" | "resume" | "feedback",
+			context: "initial_task" | "resume" | "feedback" | "retry",
 		) => Promise<{ cancel?: boolean; wasCancelled?: boolean; contextModification?: string; errorMessage?: string }>,
 	) {
 		this.autoApprover = new AutoApprove(this.stateManager)
