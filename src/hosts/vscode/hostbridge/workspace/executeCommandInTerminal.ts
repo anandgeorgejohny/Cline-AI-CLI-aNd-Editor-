@@ -3,7 +3,9 @@ import * as vscode from "vscode"
 import { Logger } from "@/shared/services/Logger"
 
 /**
- * Executes a command in a new terminal
+ * Executes a single command in a new VS Code integrated terminal.
+ * This is intentionally minimal: create terminal, show terminal, send command.
+ *
  * @param request The request containing the command to execute
  * @returns Response indicating success
  */
@@ -11,7 +13,6 @@ export async function executeCommandInTerminal(
 	request: ExecuteCommandInTerminalRequest,
 ): Promise<ExecuteCommandInTerminalResponse> {
 	try {
-		// Create terminal with fixed options
 		const terminalOptions: vscode.TerminalOptions = {
 			name: "Cline",
 			iconPath: new vscode.ThemeIcon("cline-icon"),
@@ -20,13 +21,8 @@ export async function executeCommandInTerminal(
 			},
 		}
 
-		// Create a new terminal
 		const terminal = vscode.window.createTerminal(terminalOptions)
-
-		// Show the terminal to the user
 		terminal.show()
-
-		// Send the command to the terminal
 		terminal.sendText(request.command, true)
 
 		return ExecuteCommandInTerminalResponse.create({

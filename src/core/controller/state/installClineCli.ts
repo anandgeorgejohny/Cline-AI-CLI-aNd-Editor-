@@ -6,7 +6,11 @@ import { Logger } from "@/shared/services/Logger"
 import { Controller } from ".."
 
 /**
- * Handles the installation of the Cline CLI tool
+ * Handles launching the Cline CLI installation command in the host terminal.
+ * Uses the shared host-bridge RPC so hosts can implement the lightest possible
+ * single-command terminal launch without reintroducing the older terminal
+ * orchestration features.
+ *
  * @param controller The controller instance
  * @param _request The empty request
  * @returns Empty response
@@ -15,8 +19,6 @@ export async function installClineCli(_controller: Controller, _request: EmptyRe
 	const installCommand = "npm install -g cline"
 
 	try {
-		// Use the HostProvider to execute the command in a terminal
-		// This works across different platforms (VSCode, JetBrains, etc.)
 		const response = await HostProvider.workspace.executeCommandInTerminal(
 			ExecuteCommandInTerminalRequest.create({
 				command: installCommand,
